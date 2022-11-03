@@ -1,0 +1,332 @@
+import asyncio
+from fileinput import filename
+import hikari
+from hikari import Intents
+from lavasnek_rs import Lavalink
+import lightbulb
+from lightbulb.ext import filament
+import os
+import miru
+from miru.ext import nav 
+import aiohttp
+import concurrent.futures
+from enum import auto
+from logging import exception, raiseExceptions
+from multiprocessing import Event
+from tkinter import EventType
+import io
+from pathlib import Path
+
+from dotenv import load_dotenv 
+
+load_dotenv()
+TOKEN = os.getenv("TOKEN")
+
+bot = lightbulb.BotApp(
+    TOKEN,
+    intents=hikari.Intents.ALL,
+    default_enabled_guilds=(988579939655778324, 890010030408093706,1009170512779431998, 686007857644175380, 1002009682338136076)
+    )
+miru.load(bot)  
+ 
+@bot.listen(hikari.StartedEvent)
+async def bot_started(event):
+    print('DayWalkR Just Walked In')
+
+
+@bot.listen()
+async def voice_state_update(event: hikari.VoiceStateUpdateEvent) -> None:
+    bot.d.lavalink.raw_handle_event_voice_state_update(
+        event.state.guild_id,
+        event.state.user_id,
+        event.state.session_id,
+        event.state.channel_id,
+    )
+
+@bot.listen()
+async def on_starting(event: hikari.StartingEvent) -> None:
+    bot.d.aio_session = aiohttp.ClientSession()
+    bot.d.process_pool = concurrent.futures.ProcessPoolExecutor()
+    
+
+@bot.listen()
+async def on_stopping(event: hikari.StoppingEvent) -> None:
+    await bot.d.aio_session.close()
+    bot.d.process_pool.shutdown(wait=True)
+
+@bot.command #Decorator
+@lightbulb.command('ping', 'Gives Bot Latency!')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def ping(ctx: lightbulb.Context) -> None:
+    embed=hikari.Embed(title=f"**My ping is {bot.heartbeat_latency * 1_000:.0f} ms.**", color=0x6100FF)
+    embed.set_image('https://media.giphy.com/media/8TFzy0P5sY1dcNjxI0/giphy.gif')
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('group','This is a group')
+@lightbulb.implements(lightbulb.SlashCommandGroup)
+async def my_group(ctx):
+    pass
+
+@my_group.child
+@lightbulb.command('subcommand', 'This is a subcommand')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title='I am a subcommand, I do as Zaddy Commands!!')
+    embed.set_image('https://media.giphy.com/media/26BkNrYYSj9onwJ0s/giphy.gif')
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+
+@bot.command
+@lightbulb.command('ape', 'What Ape Ready For?!?')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title='Ape Ready For SNu SNu')
+    embed.set_image('https://d3hp8xnxb3lun4.cloudfront.net/wp-content/uploads/2016/10/The-Rake-American-Psycho-12-1200x800.jpg')
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('dumpit', 'Bogdanoff Engaged')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    dump_path = Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\dump it (damp et, dömp it) bogdanoff (320 kbps).mp3")
+    embed = hikari.Embed(title='Bogdanoff Engaged')
+    embed.set_image(dump_path)
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('ye', 'All Praise')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title='All Praise To Ye')
+    embed.set_image('https://geeksoncoffee.com/wp-content/uploads/2019/12/eeekscarykindofcuteoracutephotou1w650q60fmpjpgfitcropcropfaces22.jpg')
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('bet', 'What Your Suppose To Do')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.context) -> None:
+    embed = hikari.Embed(title='What Do We Do?!?')
+    embed.set_image(hikari.File("C:\\Users\\scott\Desktop\\HEHEHE\\betmore-gregriba.gif"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('cucked', 'It Has No Soul?!?')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Ape Can't Beat The Box")
+    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\cuckedx6.jpeg"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('stfu', 'Hey You!!')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Now It's Time")
+    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\HEHEHE\\Shut The Fuck Up.mp4"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('thanks', 'Thank Someone For Their Service')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Thank You For Your Service")
+    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Thank You For Your Service.jpg"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+
+@bot.command
+@lightbulb.command('simp', 'Simp Lyfe')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="A Simp In Natural Habitat")
+    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Simp Lyfe be Like.mp4"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('pinged', 'Who Did It?!?')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Who Pinged Me?!?")
+    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Who pinged me.mp4"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('sad', 'Who The Sad Boi')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="No One Knows What It's Like, To Be A Sad Duck")
+    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Sad Duck.mp4"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('advice', 'Financial Advice')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Obama Says")
+    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\obama advice.jpg"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('dip', 'Dip Financial Advice')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Kanye Says")
+    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Kanye Buy The Dip.jpg"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('bye', 'The Final Goodbye')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Execute Order Adios")
+    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Execute Order Kurt.jpg"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('bmw', 'Come Howl With Me')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Come H O W L With Me!!")
+    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\H O W L with me .png"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('laugh', 'For When LOL Aint Enough')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Charlie And The Gang")
+    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\Charlie Murphyyyy.mp4"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('dale', 'Use For Smoke')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Dale Brings All The Smoke")
+    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\Planet_Fitness_Selfie_X6.jpeg"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('blessings', 'Many Blessings')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Allah Brings Great Glory")
+    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\AAALLLLAAAHHHHHH mp4.mp4"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    components=view.build()
+    await ctx.respond(embed=embed, components=view.build())
+
+
+@bot.command
+@lightbulb.add_checks(lightbulb.has_guild_permissions(hikari.Permissions.ADMINISTRATOR))
+@lightbulb.option('member', 'the target user',type=hikari.User , required = True)
+@lightbulb.command('allahuakbar', 'Statistical Procurement')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Hello Mr.Anderson")
+    embed.set_image('https://media.giphy.com/media/LMnpUqCHQ2CTP6KfZs/giphy.gif')
+    view = miru.View()
+    view.add_item(miru.Button(url='https://foot.wiki/image.php?id=40W2QF.jpg', label="Shhh Don't Click This Button.... But You Want To, Don't You"))
+    await ctx.options.member.send(embed=embed, components=view.build())
+    await ctx.respond(f"You've Been Contacted")
+
+
+@bot.listen(lightbulb.events.CommandErrorEvent) 
+async def on_error(event: lightbulb.CommandErrorEvent)-> None:
+    embed = hikari.Embed(title='BWahaha')
+    embed.add_field(name= "So Sad", value= "All The Years Of Your Life, Just To Get Here.")
+    embed.set_image('https://dreager1.files.wordpress.com/2012/07/ash_ketchum_vs_hulk_by_leadapprentice.jpg?w=584')
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    
+    if isinstance(event.exception, lightbulb.CommandInvocationError):
+        await event.context.respond(embed=embed, components=view.build())
+        raise event.exception
+
+
+bot.load_extensions_from('./extensions')
+bot.run(
+    status=hikari.Status.ONLINE,
+    activity=hikari.Activity(
+        name="Covert Operatives",
+        type=hikari.ActivityType.LISTENING ,
+    ),
+)
