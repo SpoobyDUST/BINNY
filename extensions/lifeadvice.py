@@ -18,7 +18,7 @@ async def dad(ctx: lightbulb.Context) -> None:
     emb.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     emb.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=emb, components=view.build())
 
 def load(bot):

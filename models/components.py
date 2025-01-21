@@ -45,7 +45,7 @@ class OptionButton(miru.Button):
 
 
 
-class OptionsSelect(miru.Select):
+class OptionsSelect(miru.TextSelect):
     """Select that sets view value to first selected option's value."""
 
     async def callback(self, context: miru.View) -> None:

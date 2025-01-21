@@ -21,27 +21,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-
+hikari.Activity(name='To PsyOPs', type=hikari.ActivityType.LISTENING)
 bot = lightbulb.BotApp(
     TOKEN,
     intents=hikari.Intents.ALL,
-    default_enabled_guilds=(988579939655778324, 890010030408093706,1009170512779431998, 686007857644175380, 1002009682338136076)
+    
+    default_enabled_guilds=(988579939655778324, 764963419920531457, 890010030408093706,1009170512779431998, 686007857644175380, 1002009682338136076, 1286207146530443285)
     )
-miru.load(bot)  
+miru.install(bot)  
  
 @bot.listen(hikari.StartedEvent)
 async def bot_started(event):
     print('DayWalkR Just Walked In')
 
-
-@bot.listen()
-async def voice_state_update(event: hikari.VoiceStateUpdateEvent) -> None:
-    bot.d.lavalink.raw_handle_event_voice_state_update(
-        event.state.guild_id,
-        event.state.user_id,
-        event.state.session_id,
-        event.state.channel_id,
-    )
 
 @bot.listen()
 async def on_starting(event: hikari.StartingEvent) -> None:
@@ -63,7 +55,7 @@ async def ping(ctx: lightbulb.Context) -> None:
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -81,7 +73,7 @@ async def embed_command(ctx: lightbulb.Context) -> None:
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 
@@ -90,25 +82,14 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title='Ape Ready For SNu SNu')
-    embed.set_image('https://d3hp8xnxb3lun4.cloudfront.net/wp-content/uploads/2016/10/The-Rake-American-Psycho-12-1200x800.jpg')
+    embed.set_image('https://media.giphy.com/media/SnioCkL9cd3B6/giphy.gif')
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
-@bot.command
-@lightbulb.command('dumpit', 'Bogdanoff Engaged')
-@lightbulb.implements(lightbulb.SlashCommand)
-async def embed_command(ctx: lightbulb.Context) -> None:
-    dump_path = Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\dump it (damp et, dömp it) bogdanoff (320 kbps).mp3")
-    embed = hikari.Embed(title='Bogdanoff Engaged')
-    embed.set_image(dump_path)
-    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
-    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
-    view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
-    await ctx.respond(embed=embed, components=view.build())
+
 
 @bot.command
 @lightbulb.command('ye', 'All Praise')
@@ -119,7 +100,7 @@ async def embed_command(ctx: lightbulb.Context) -> None:
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -127,11 +108,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.context) -> None:
     embed = hikari.Embed(title='What Do We Do?!?')
-    embed.set_image(hikari.File("C:\\Users\\scott\Desktop\\HEHEHE\\betmore-gregriba.gif"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\Desktop\\HEHEHE\\betmore-gregriba.gif"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -139,11 +120,11 @@ async def embed_command(ctx: lightbulb.context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Ape Can't Beat The Box")
-    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\cuckedx6.jpeg"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\cuckedx6.jpeg"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -151,11 +132,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Now It's Time")
-    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\HEHEHE\\Shut The Fuck Up.mp4"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\HEHEHE\\Shut The Fuck Up.mp4"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -163,11 +144,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Thank You For Your Service")
-    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Thank You For Your Service.jpg"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Thank You For Your Service.jpg"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 
@@ -176,11 +157,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="A Simp In Natural Habitat")
-    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Simp Lyfe be Like.mp4"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Simp Lyfe be Like.mp4"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -188,11 +169,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Who Pinged Me?!?")
-    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Who pinged me.mp4"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Who pinged me.mp4"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -200,11 +181,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="No One Knows What It's Like, To Be A Sad Duck")
-    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Sad Duck.mp4"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Sad Duck.mp4"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -212,11 +193,47 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Obama Says")
-    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\obama advice.jpg"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\obama advice.jpg"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('dumpit', 'Use In Times Of Dampage')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Prepare Thy Anus")
+    embed.set_image(hikari.File(r"C:\Users\scott\Desktop\HEHEHE\Cliff but in  discord friendly.jpeg"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('brr', 'Oh, You KnoOow')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="When Becky Brings The Printer")
+    embed.set_image(hikari.File(r"C:\Users\scott\Desktop\HEHEHE\Becky Go BRR in Da Trap.mp4"))
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@bot.command
+@lightbulb.command('dampit', 'Use In Times Of Dampage')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def embed_command(ctx: lightbulb.Context) -> None:
+    embed = hikari.Embed(title="Prepare Thy Pockets")
+    embed.set_image("https://media.giphy.com/media/YRw676NBrmPeM/giphy.gif")
+    embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
+    embed.set_footer('Please Return Carrier Cassowary aka CaCa')
+    view = miru.View()
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -224,11 +241,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Kanye Says")
-    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Kanye Buy The Dip.jpg"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Kanye Buy The Dip.jpg"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -236,11 +253,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Execute Order Adios")
-    embed.set_image(Path(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Execute Order Kurt.jpg"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Execute Order Kurt.jpg"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -248,11 +265,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Come H O W L With Me!!")
-    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\H O W L with me .png"))
+    embed.set_image(hikari.File(r"C:\Users\scott\Desktop\HEHEHE\H O W L with me discord friendly.jpeg"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -260,11 +277,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Charlie And The Gang")
-    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\Charlie Murphyyyy.mp4"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Charlie Murphyyyy.mp4"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -272,11 +289,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Dale Brings All The Smoke")
-    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\Planet_Fitness_Selfie_X6.jpeg"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Planet_Fitness_Selfie_X6.jpeg"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @bot.command
@@ -284,11 +301,11 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
     embed = hikari.Embed(title="Allah Brings Great Glory")
-    embed.set_image(hikari.File("C:\\Users\\scott\\Desktop\\HEHEHE\\AAALLLLAAAHHHHHH mp4.mp4"))
+    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\AAALLLLAAAHHHHHH mp4.mp4"))
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     components=view.build()
     await ctx.respond(embed=embed, components=view.build())
 
@@ -315,7 +332,7 @@ async def on_error(event: lightbulb.CommandErrorEvent)-> None:
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     
     if isinstance(event.exception, lightbulb.CommandInvocationError):
         await event.context.respond(embed=embed, components=view.build())
@@ -326,7 +343,7 @@ bot.load_extensions_from('./extensions')
 bot.run(
     status=hikari.Status.ONLINE,
     activity=hikari.Activity(
-        name="Covert Operatives",
+        name="Covert Operations",
         type=hikari.ActivityType.LISTENING ,
-    ),
+    )
 )

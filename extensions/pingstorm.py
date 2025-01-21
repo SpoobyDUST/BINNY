@@ -2,6 +2,7 @@ import lightbulb
 import hikari
 import asyncio
 from lightbulb.buckets import GuildBucket
+import miru
 
 pingstorm_plugin = lightbulb.Plugin("pingstorm", "ping deez nuts", include_datastore = True)
 
@@ -30,6 +31,13 @@ async def pingstorm(ctx: lightbulb.Context, amount: int, user: hikari.Member) ->
         ping += 1
         await asyncio.sleep(1)
     await ctx.respond("Finished!", delete_after=5)
+    embed = hikari.Embed(title="Hello Mr.Anderson")
+    embed.set_image('https://media.giphy.com/media/f0GIF5Y2vGAve/giphy-downsized-large.gif')
+    embed.set_thumbnail('https://media.giphy.com/media/NRvtqX3xE3064/giphy.gif')
+    view = miru.View()
+    view.add_item(miru.Button(url='https://foot.wiki/image.php?id=40W2QF.jpg', label="Shhh Don't Click This Button.... But You Want To, Don't You"))
+    await ctx.respond(embed=embed, components=view.build())
+    
 
 
 def load(bot):

@@ -304,7 +304,7 @@ async def tictactoe(ctx:lightbulb.Context, user: hikari.Member, size: t.Optional
             ).set_thumbnail(ctx.member.display_avatar_url),
             components=view.build(),
         )
-        view.start(await proxy.message())
+        await view.start(await proxy.message())
 
     else:
         await ctx.respond(

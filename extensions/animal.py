@@ -22,7 +22,7 @@ animal_plugin = lightbulb.Plugin("animal", "For cute animals!")
 @lightbulb.implements(lightbulb.SlashCommand, lightbulb.PrefixCommand)
 async def animal(ctx: lightbulb.Context) -> None:
     select_menu = (
-        ctx.bot.rest.build_action_row()
+        ctx.bot.rest.build_message_action_row()
         .add_select_menu("animal_select")
         .set_placeholder("Pick an animal")
     )

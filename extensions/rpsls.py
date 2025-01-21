@@ -150,7 +150,7 @@ async def rps(ctx: lightbulb.Context) -> None:
     view = RPSView()
 
     embed = hikari.Embed(
-        title="RPSLS",
+        title="Play Rock, Paper, Scissors, Lizard, Spock",
         description="Click on the button options to continue the game!",
         
     )
@@ -181,7 +181,7 @@ async def rules(ctx: lightbulb.Context):
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 

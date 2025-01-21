@@ -17,12 +17,9 @@ import miru
 from miru.ext import nav
 import random
 import asyncio
-import aiohttp
-
+import itertools
+from itertools import product
 dotenv.load_dotenv()
-
-
-MY_ENV_VAR = os.getenv('.env')
 
 HIKARI_VOICE = False
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
@@ -31,16 +28,19 @@ SPOTCLIENT_ID=os.getenv("SPOTID")
 SPOTCLIENT_SECRET=os.getenv("SPOTSECRET")
 GENIUS_API_KEY=os.getenv("GENAPI")
 TOKEN=os.getenv("TOKEN")
-LAVALINK_SERVER="149.129.215.50"
-LAVALINK_PASSWORD="alfarimusic"
-LAVALINK_PORT=2333
+LAVALINK_SERVER="lavalinkv3-id.serenetia.com"
+LAVALINK_PASSWORD="https://dsc.gg/ajidevserver"
+LAVALINK_PORT=80
 LOGGING_CHANNEL=os.getenv("CHANNEL")
 
 
 
 plugin = lightbulb.Plugin("Music", include_datastore = True)
-
-
+bot = lightbulb.BotApp(
+    TOKEN,
+    intents=hikari.Intents.ALL,
+    default_enabled_guilds=(988579939655778324, 890010030408093706,1009170512779431998, 686007857644175380, 1002009682338136076)
+    )
 
 class EventHandler:
 
@@ -88,13 +88,13 @@ class EventHandler:
           resp = await plugin.bot.rest.create_message(chanid, embed=embed)
           await asyncio.sleep(30)
           await resp.delete()
-        
+
     async def track_finish(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
         BOT_ID = plugin.bot.application.id
         guild_node = await lavalink.get_guild_node(event.guild_id)
         chanid = guild_node.get_data().get("ChannelID")
         states = plugin.bot.cache.get_voice_states_view_for_guild(event.guild_id)
-        users = [state async for state in states.iterator().filter(lambda i: i.user_id != BOT_ID)]
+        users = [state for state in states if state.user_id != BOT_ID]
         loop_enabled = guild_node.get_data().get("loop")
         recommend_enabled = guild_node.get_data().get("recommend")
         if not guild_node or not guild_node.now_playing and not users:
@@ -112,24 +112,23 @@ class EventHandler:
               result = f"ytmsearch:{track}"
               results = await plugin.d.lavalink.get_tracks(result)
               await lavalink.play(event.guild_id, results.tracks[0]).queue()
-            except:
+            except Exception as e:
               embed = hikari.Embed(title="**Unable to loop the track.**", color=0xC80000,)
               await plugin.bot.rest.create_message(chanid, embed=embed)
               return
         if recommend_enabled:
-            try:
-              url_data = urlparse.urlparse(f"{song.uri}")
-            except:
-              embed = hikari.Embed(title="**Unable to find any related tracks.**", color=0xC80000,)
-              await plugin.bot.rest.create_message(chanid, embed=embed)
-              return
-            query = urlparse.parse_qs(url_data.query)
-            video = query["v"][0]
-            ytmusic = YTMusic()
-            playlist = ytmusic.get_watch_playlist(videoId=f"{video}", limit=1)
-            song = playlist["tracks"][random.randrange(1,10)]["title"]
-            recommended_track = f"ytmsearch:{song}"
-            query_information = await lavalink.get_tracks(recommended_track)
+           # Fetch information about the currently playing track
+            song = await plugin.d.lavalink.decode_track(event.track)
+        
+            # Search for recommendations based on the currently playing track
+            sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID, client_secret=SPOTCLIENT_SECRET))
+            results = sp.recommendations(seed_tracks=[song.spotify_id], limit=1)
+            recommended_track = results['tracks'][0]
+
+            # Queue up the recommended track for playback
+            queryfinal = f"{recommended_track['name']} {recommended_track['artists'][0]['name']}"
+            result = f"ytmsearch:{queryfinal}"  # Assuming you're using the same method for queuing tracks
+            query_information = await plugin.d.lavalink.get_tracks(result)
             await lavalink.play(event.guild_id, query_information.tracks[0]).queue()
     async def track_exception(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackException) -> None:
         embed=hikari.Embed(title="**Issue**", description=f"There was an issue on guild: {event.guild_id}", color=0xC80000, timestamp=datetime.datetime.now().astimezone())
@@ -148,7 +147,7 @@ async def _join(ctx: lightbulb.Context) -> Optional[hikari.Snowflake]:
     assert ctx.guild_id is not None
 
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
 
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
@@ -156,11 +155,11 @@ async def _join(ctx: lightbulb.Context) -> Optional[hikari.Snowflake]:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
 
-    channel_id = voice_state[0].channel_id
+    channel_id = voice_state.channel_id
 
     if HIKARI_VOICE:
         assert ctx.guild_id is not None
@@ -207,7 +206,7 @@ async def join(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -217,16 +216,14 @@ async def join(ctx: lightbulb.Context) -> None:
 async def leave(ctx: lightbulb.Context) -> None:
     await plugin.d.lavalink.destroy(ctx.guild_id)
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if HIKARI_VOICE:
         if ctx.guild_id is not None:
             await plugin.bot.update_voice_state(ctx.guild_id, None)
             await plugin.d.lavalink.wait_for_connection_info_remove(ctx.guild_id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
-        view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
-        await ctx.respond(embed=embed, components=view.build())
+        await ctx.respond(embed=embed)
         return None
     else:
         await plugin.d.lavalink.leave(ctx.guild_id)
@@ -237,31 +234,26 @@ async def leave(ctx: lightbulb.Context) -> None:
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("song", "The name of the song (or Spotify url) that you want to play.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("song", "The name of the song (or url) that you want to play.", modifier=lightbulb.OptionModifier.CONSUME_REST)
 @lightbulb.command("play", "BINNY plays your desired song.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def play(ctx: lightbulb.Context) -> None:
     query = ctx.options.song
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.itertools().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
-        embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
-        embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
-        embed.set_footer('Please Return Carrier Cassowary aka CaCa')
-        view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
-        await ctx.respond(embed=embed, components=view.build())
-        return
+        await ctx.respond(embed=embed)
+        return None
     await _join(ctx)
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     firsttrack = node.get_data().get("First")
-    chanid = node.get_data().get("ChannelID")
+    chanid = voice_state.channel_id
     ID = ctx.channel_id
     node.set_data({"ChannelID": ID, "First": False})
     if "youtube" in query:
@@ -282,7 +274,7 @@ async def play(ctx: lightbulb.Context) -> None:
          result = f"ytmsearch:{queryfinal}"
          query_information = await plugin.d.lavalink.get_tracks(result)
          try:
-          await plugin.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
+          await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
          except:
           pass
         embed=hikari.Embed(title="**Added Playlist To The Queue.**", color=0x6100FF)
@@ -382,7 +374,6 @@ async def play(ctx: lightbulb.Context) -> None:
      except:
         pass
      await ctx.respond(embed=embed1)
-     await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
     else:
      node.set_data({"ChannelID": ID, "First": False})
      sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -445,7 +436,7 @@ async def search(ctx: lightbulb.Context) -> None:
         pass
       try:
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
       except:
         embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
@@ -453,7 +444,7 @@ async def search(ctx: lightbulb.Context) -> None:
         embed.set_image('https://media.giphy.com/media/IHOOMIiw5v9VS/giphy.gif')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         embed=hikari.Embed(title="**Unable To Find Any Tracks**", description=f"Unable to find tracks for **{query}**", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
         embed.set_image('https://media.giphy.com/media/IHOOMIiw5v9VS/giphy.gif')
@@ -464,23 +455,24 @@ async def search(ctx: lightbulb.Context) -> None:
     else:
         embed=hikari.Embed(title="**URL'S are not supported!**", colour=0xC80000)
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
-    
+
+
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("stop", "BINNY stops the currently playing song. (Type skip if you would like to move onto the next song.)", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def stop(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -490,7 +482,7 @@ async def stop(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -507,13 +499,11 @@ async def stop(ctx: lightbulb.Context) -> None:
         length = divmod(node.now_playing.track.info.length, 60000)
         position = divmod(node.now_playing.track.info.position, 60000)
         embed.add_field(name="Duration Played", value=f"{int(position[0])}:{round(position[1]/1000):02}/{int(length[0])}:{round(length[1]/1000):02}")
-        embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
-        embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     except:
         pass
     await plugin.d.lavalink.stop(ctx.guild_id)
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -523,14 +513,14 @@ async def stop(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def volume(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -540,7 +530,7 @@ async def volume(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     if ctx.options.percentage > 150:
@@ -549,7 +539,7 @@ async def volume(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     if ctx.options.percentage < 0:
@@ -558,7 +548,7 @@ async def volume(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     await plugin.d.lavalink.volume(ctx.guild_id, ctx.options.percentage)
@@ -581,7 +571,7 @@ async def volume(ctx: lightbulb.Context) -> None:
     except:
         pass
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -591,14 +581,14 @@ async def volume(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def seek(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -608,7 +598,7 @@ async def seek(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     if not (match := re.match(TIME_REGEX, ctx.options.time)):
@@ -617,7 +607,7 @@ async def seek(ctx: lightbulb.Context) -> None:
             embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
             embed.set_footer('Please Return Carrier Cassowary aka CaCa')
             view = miru.View()
-            view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+            view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
             await ctx.respond(embed=embed, components=view.build())
             return
     if match.group(3):
@@ -642,7 +632,7 @@ async def seek(ctx: lightbulb.Context) -> None:
     except:
         pass
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -651,14 +641,14 @@ async def seek(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def replay(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -668,7 +658,7 @@ async def replay(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     await plugin.d.lavalink.seek_millis(ctx.guild_id, 0000)
@@ -678,7 +668,6 @@ async def replay(ctx: lightbulb.Context) -> None:
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
     embed = hikari.Embed(title=f"**Replaying {node.now_playing.track.info.title} - {node.now_playing.track.info.author}.**", colour=0x6100FF)
-    embed.set_image('https://media.giphy.com/media/xUPJPv46iHNBk9BZyE/giphy.gif')
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -690,9 +679,9 @@ async def replay(ctx: lightbulb.Context) -> None:
     except:
         pass
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
-    
+
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("skip", "BINNY skips to the next song (if any).", auto_defer=True)
@@ -701,14 +690,14 @@ async def skip(ctx: lightbulb.Context) -> None:
     skip = await plugin.d.lavalink.skip(ctx.guild_id)
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     if not skip:
@@ -717,7 +706,7 @@ async def skip(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     else:
@@ -731,7 +720,7 @@ async def skip(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
     elif loop_enabled:
         embed = hikari.Embed(title=f"**Skipped {skip.track.info.title} - {skip.track.info.author}.**", description=f"Queueloop has been enabled. Playing the next track.", colour=0x6100FF)
@@ -739,15 +728,13 @@ async def skip(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
-        await ctx.respond(embed=embed, components=view.build())
     elif (len(node.queue) == 0):
         embed = hikari.Embed(title=f"**Skipped {skip.track.info.title} - {skip.track.info.author}.**", description=f"No songs left in the queue.", colour=0x6100FF)
         embed.set_image('https://media.giphy.com/media/RH793bwTeHoPO3yhtv/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
     else:
         embed = hikari.Embed(title=f"**Skipped {skip.track.info.title} - {skip.track.info.author}.**", colour=0x6100FF)
@@ -755,7 +742,7 @@ async def skip(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -765,14 +752,14 @@ async def skip(ctx: lightbulb.Context) -> None:
 async def pause(ctx: lightbulb.Context) -> None:
     await plugin.d.lavalink.pause(ctx.guild_id)
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -782,7 +769,7 @@ async def pause(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -791,7 +778,6 @@ async def pause(ctx: lightbulb.Context) -> None:
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
     embed = hikari.Embed(title=f"**Paused {node.now_playing.track.info.title} - {node.now_playing.track.info.author}.**", description="Type **/resume** to resume the song.", colour=0x6100FF)
-    embed.set_image('https://media.giphy.com/media/CYyf7bch0fWhi/giphy.gif')
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -803,7 +789,7 @@ async def pause(ctx: lightbulb.Context) -> None:
     except:
         pass
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -813,14 +799,14 @@ async def pause(ctx: lightbulb.Context) -> None:
 async def resume(ctx: lightbulb.Context) -> None:
     await plugin.d.lavalink.resume(ctx.guild_id)
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -830,7 +816,7 @@ async def resume(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -839,7 +825,6 @@ async def resume(ctx: lightbulb.Context) -> None:
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
     embed = hikari.Embed(title=f"**Resumed {node.now_playing.track.info.title} - {node.now_playing.track.info.author}.**", description="Type **/pause** the pause the song.", colour=0x6100FF)
-    embed.set_image('https://media.giphy.com/media/yj5UdA4elp8Wc/giphy.gif')
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -851,7 +836,7 @@ async def resume(ctx: lightbulb.Context) -> None:
     except:
         pass
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -869,16 +854,8 @@ async def lyrics(ctx: lightbulb.Context) -> None:
       test_stirng = f"{song.lyrics}"
      except:
       embed = hikari.Embed(title="**Unable to find any lyrics!**", colour=0xC80000)
-      embed.set_image('https://media.giphy.com/media/IHOOMIiw5v9VS/giphy.gif')
-      embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
-      embed.set_footer('Please Return Carrier Cassowary aka CaCa')
-      view = miru.View()
-      view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
-      await ctx.respond(embed=embed, components=view.build())
+      await ctx.respond(embed=embed)
       embed=hikari.Embed(title="**Unable To find Lyrics**", description=f"Unable to find lyrics for **{ctx.options.song}**", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
-      embed.set_image('https://media.giphy.com/media/IHOOMIiw5v9VS/giphy.gif')
-      embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
-      embed.set_footer('Please Return Carrier Cassowary aka CaCa')
       await plugin.bot.rest.create_message(LOGGING_CHANNEL, embed=embed)
      total = 1
      for i in range(len(test_stirng)):
@@ -886,11 +863,7 @@ async def lyrics(ctx: lightbulb.Context) -> None:
          total = total + 1
      if total > 650:
        embed=hikari.Embed(title="**Character Limit Exceeded!**", description=f"The lyrics in this song are too long. (Over 6000 characters)", color=0xC80000)
-       embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
-       embed.set_footer('Please Return Carrier Cassowary aka CaCa')
-       view = miru.View()
-       view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
-       await ctx.respond(embed=embed, components=view.build())
+       await ctx.respond(embed=embed)
      sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
      results = sp.search(q=f'{ctx.options.song}', limit=1)
      for idx, track in enumerate(results['tracks']['items']):
@@ -898,8 +871,6 @@ async def lyrics(ctx: lightbulb.Context) -> None:
         queryartist = track["artists"][0]["name"]
         queryfinal =f"{queryartist}" + " " + f"{querytrack}"
      embed2=hikari.Embed(title=f"**{querytrack}**" ,description=f"{song.lyrics}", color=0x6100FF)
-     embed2.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
-     embed2.set_footer('Please Return Carrier Cassowary aka CaCa')
      await ctx.respond(embed=embed2)
 
 @plugin.command()
@@ -908,14 +879,14 @@ async def lyrics(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def now_playing(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -925,7 +896,7 @@ async def now_playing(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -957,13 +928,13 @@ async def now_playing(ctx: lightbulb.Context) -> None:
     except:
         pass
     try:
-        embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
+        embed.set_image(f"{track['album']['images'][0]['url']}")
     except:
         pass
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -973,14 +944,14 @@ async def now_playing(ctx: lightbulb.Context) -> None:
 async def queue(ctx: lightbulb.Context) -> None:
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -990,7 +961,7 @@ async def queue(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     if len(node.queue) == 1:
@@ -999,7 +970,7 @@ async def queue(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     songs = [f'{tq.track.info.title} - {tq.track.info.author} ({int(divmod(tq.track.info.length, 60000)[0])}:{round(divmod(tq.track.info.length, 60000)[1]/1000):02})' for i, tq in enumerate(node.queue[1:], start=1)]
@@ -1025,7 +996,7 @@ async def queue(ctx: lightbulb.Context) -> None:
         pass
     navigator = nav.NavigatorView(pages=embeds)
     await navigator.send(ctx.interaction)
-    
+
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("index", "Index for the song you want to remove.", int, required = True)
@@ -1033,14 +1004,14 @@ async def queue(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def remove(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -1051,7 +1022,7 @@ async def remove(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     index = int(ctx.options.index)
@@ -1081,7 +1052,7 @@ async def remove(ctx: lightbulb.Context) -> None:
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -1091,14 +1062,14 @@ async def remove(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def skipto(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -1109,7 +1080,7 @@ async def skipto(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     index = int(ctx.options.position)
@@ -1146,7 +1117,7 @@ async def skipto(ctx: lightbulb.Context) -> None:
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -1157,14 +1128,14 @@ async def skipto(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def move(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -1175,7 +1146,7 @@ async def move(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     new_index = int(ctx.options.new_position)
@@ -1187,7 +1158,7 @@ async def move(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     queue = node.queue
@@ -1201,7 +1172,7 @@ async def move(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     node.queue = queue
@@ -1211,7 +1182,7 @@ async def move(ctx: lightbulb.Context) -> None:
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -1224,14 +1195,14 @@ async def empty(ctx: lightbulb.Context) -> None:
     recommend_enabled = node.get_data().get("recommend")
     loop_enabled = node.get_data().get("loop")
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -1241,7 +1212,7 @@ async def empty(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -1259,16 +1230,16 @@ async def empty(ctx: lightbulb.Context) -> None:
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
-    
+
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("newreleases", "See the latest releases for the day.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def newreleases(ctx: lightbulb.Context) -> None:
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
-    response = sp.new_releases(limit=11)
+    response = sp.new_releases(limit=21)
     albums = response['albums']
     today = date.today()
     embed=hikari.Embed(title=f"**New Releases - {today}**", color=0x6100FF)
@@ -1281,7 +1252,7 @@ async def newreleases(ctx: lightbulb.Context) -> None:
     except:
         pass
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -1291,7 +1262,7 @@ async def newreleases(ctx: lightbulb.Context) -> None:
 async def trending(ctx: lightbulb.Context) -> None:
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     playlist_URI = "37i9dQZF1DXcBWIGoYBM5M"
-    track_uris = [x["track"]["uri"] for x in sp.playlist_items(playlist_URI)["items"]]
+    track_uris = [x["track"]["uri"] for x in sp.playlist_tracks(playlist_URI)["items"]]
     track = sp.track(track_uris[1])
     today = date.today()
     embed=hikari.Embed(title=f"**Trending Tracks - {today}**", color=0x6100FF)
@@ -1305,23 +1276,23 @@ async def trending(ctx: lightbulb.Context) -> None:
         pass
      
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
-    
+
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("recommend", "BINNY adds recommended tracks based on what's playing.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def recommend(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -1331,7 +1302,7 @@ async def recommend(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     recommend_enabled = node.get_data().get("recommend")
@@ -1343,7 +1314,7 @@ async def recommend(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
     else:
         ID = ctx.channel_id
@@ -1353,7 +1324,7 @@ async def recommend(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -1362,7 +1333,7 @@ async def recommend(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.SlashCommand)
 async def queueloop(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
@@ -1370,7 +1341,7 @@ async def queueloop(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -1380,7 +1351,7 @@ async def queueloop(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     loop_enabled = node.get_data().get("loop")
@@ -1392,7 +1363,7 @@ async def queueloop(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
     else:
         ID = ctx.channel_id
@@ -1402,21 +1373,21 @@ async def queueloop(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
-        await ctx.respond(embed=embed, components=view.build())    
-        
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
+        await ctx.respond(embed=embed, components=view.build()) 
+
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("support", "Visit trading educational server!", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
-async def vote(ctx: lightbulb.Context) -> None:
+async def support(ctx: lightbulb.Context) -> None:
     embed=hikari.Embed(title="**Click the button below to visit X6 Live trading educational server!**",color=0x6100FF)
     embed.set_image('https://www.financegab.com/wp-content/uploads/2020/02/Stock-Market-Education.jpg')
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
     view.add_item(miru.Button(url="https://discord.com/invite/VHsXwHZB3k", label="Join The Discord Server!"))
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -1425,7 +1396,7 @@ async def vote(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def donate(ctx: lightbulb.Context) -> None:
     embed=hikari.Embed(title="**Let’s All Come Together And Help Binny Move Out Of His T Mobile Sidekick And Into A RaspberryPi!! Click A Button Below To Donate! **",color=0x6100FF)
-    embed.set_image('https://farm9.staticflickr.com/8084/8301581459_d66fe46a65_z.jpg')
+    embed.set_image('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2FzMGlyZ2x5Zjljb2Joc2NyeXY4bjR1cTB3YzgyNXhsdDZhNGltcSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o6Zto7KUPEqnxPBhS/giphy.gif')
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -1433,7 +1404,7 @@ async def donate(ctx: lightbulb.Context) -> None:
     view.add_item(miru.Button(url="https://www.paypal.me/timmyscott95", label= "Paypal Donation!"))
     view.add_item(miru.Button(url="https://cryptopayment.link/p/JDVyLZfU", label="Crpyto Dinner For Two!!"))
     view.add_item(miru.Button(url="https://account.venmo.com/u/Timothy-Scott-214", label="Donnie's Venmo!!"))
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
@@ -1442,14 +1413,14 @@ async def donate(ctx: lightbulb.Context) -> None:
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def shuffle(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
-    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    voice_state = plugin.bot.cache.get_voice_state(ctx.guild_id, ctx.author.id)
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         embed.set_image('https://media.giphy.com/media/HKemUubGztzvG/giphy.gif')
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -1459,7 +1430,7 @@ async def shuffle(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
         embed.set_footer('Please Return Carrier Cassowary aka CaCa')
         view = miru.View()
-        view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+        view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
         await ctx.respond(embed=embed, components=view.build())
         return
     if not len(node.queue) > 1:
@@ -1479,14 +1450,14 @@ async def shuffle(ctx: lightbulb.Context) -> None:
     embed.set_image('https://media.giphy.com/media/q0KrtRcr10Bhu/giphy.gif')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("help", "List Of DJ Actionables", auto_defer=True)
+@lightbulb.command("musichelp", "List Of DJ Actionables", auto_defer=True)
 @lightbulb.implements(lightbulb.SlashCommand)
-async def help(ctx: lightbulb.Context) -> None:
+async def musichelp(ctx: lightbulb.Context) -> None:
     embed=hikari.Embed(title="**Music Help Center**",color=0x6100FF)
     embed.add_field(name="General Commands", value="`/join`, `/leave`, `/play`, `/nowplaying`, `/queue`, `/pause`, `/resume`, `/skip`, `/replay`, `/stop`, `/volume`, `/seek`, `/empty`, `/shuffle`, `/skipto`, `/move`, `/queueloop`", inline=True)
     embed.add_field(name="Informative Commands", value="`/recommend`, `/lyrics`, `/search`, `/newreleases`, `/trending`")
@@ -1497,7 +1468,7 @@ async def help(ctx: lightbulb.Context) -> None:
     view = miru.View()
     view.add_item(miru.Button(url="https://cash.app/$ScottiVLN", label="Donate!"))
     view.add_item(miru.Button(url="https://discord.gg/x6live", label="Join Discord Server!"))
-    view.add_item(miru.Button(url="https://linktr.ee/X6DonaldDamus", label="LinkTree Goodies"))
+    view.add_item(miru.Button(url="https://linktr.ee/SpoobyDaPunk", label="LinkTree Goodies"))
     await ctx.respond(embed=embed, components=view.build())
 
 if HIKARI_VOICE:
