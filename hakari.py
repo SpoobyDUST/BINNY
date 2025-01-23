@@ -16,16 +16,12 @@ from multiprocessing import Event
 from tkinter import EventType
 import io
 from pathlib import Path
-import django
 
 from dotenv import load_dotenv 
-
-# Set up Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BINNY.settings')
-django.setup()
+MEDIA_URL = "http://127.0.0.1:8000/media/" 
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv("TOKEN")
 hikari.Activity(name='To PsyOPs', type=hikari.ActivityType.LISTENING)
 bot = lightbulb.BotApp(
     TOKEN,
@@ -37,7 +33,7 @@ miru.install(bot)
  
 @bot.listen(hikari.StartedEvent)
 async def bot_started(event):
-    print('BINNY Just Walked In')
+    print('DayWalkR Just Walked In')
 
 
 @bot.listen()
@@ -112,8 +108,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('bet', 'What Your Suppose To Do')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.context) -> None:
+    image_url = f"{MEDIA_URL}betmore-gregriba.gif"
+
     embed = hikari.Embed(title='What Do We Do?!?')
-    embed.set_image(hikari.File(r"C:\\Users\\scott\Desktop\\HEHEHE\\betmore-gregriba.gif"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -124,8 +122,10 @@ async def embed_command(ctx: lightbulb.context) -> None:
 @lightbulb.command('cucked', 'It Has No Soul?!?')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}cuckedx6.jpeg"
+
     embed = hikari.Embed(title="Ape Can't Beat The Box")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\cuckedx6.jpeg"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -136,8 +136,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('stfu', 'Hey You!!')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Shut The Fuck Up.mp4f"
+
     embed = hikari.Embed(title="Now It's Time")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\HEHEHE\\Shut The Fuck Up.mp4"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -148,8 +150,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('thanks', 'Thank Someone For Their Service')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Thank You For Your Service.jpg"
+
     embed = hikari.Embed(title="Thank You For Your Service")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Thank You For Your Service.jpg"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -161,8 +165,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('simp', 'Simp Lyfe')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Simp Lyfe be Like.mp4"
+
     embed = hikari.Embed(title="A Simp In Natural Habitat")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Simp Lyfe be Like.mp4"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -173,8 +179,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('pinged', 'Who Did It?!?')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Who pinged me.mp4"
+
     embed = hikari.Embed(title="Who Pinged Me?!?")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Who pinged me.mp4"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -185,8 +193,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('sad', 'Who The Sad Boi')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Sad Duck.mp4"
+
     embed = hikari.Embed(title="No One Knows What It's Like, To Be A Sad Duck")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Sad Duck.mp4"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -197,8 +207,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('advice', 'Financial Advice')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}obama advice.jpg.gif"
+
     embed = hikari.Embed(title="Obama Says")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\obama advice.jpg"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -209,8 +221,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('dumpit', 'Use In Times Of Dampage')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Cliff but in  discord friendly.jpeg"
+
     embed = hikari.Embed(title="Prepare Thy Anus")
-    embed.set_image(hikari.File(r"C:\Users\scott\Desktop\HEHEHE\Cliff but in  discord friendly.jpeg"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -221,8 +235,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('brr', 'Oh, You KnoOow')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Becky Go BRR in Da Trap.mp4"
+
     embed = hikari.Embed(title="When Becky Brings The Printer")
-    embed.set_image(hikari.File(r"C:\Users\scott\Desktop\HEHEHE\Becky Go BRR in Da Trap.mp4"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -245,8 +261,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('dip', 'Dip Financial Advice')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Kanye Buy The Dip.jpg"
+
     embed = hikari.Embed(title="Kanye Says")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Kanye Buy The Dip.jpg"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -257,8 +275,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('bye', 'The Final Goodbye')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Execute Order Kurt.jpg"
+
     embed = hikari.Embed(title="Execute Order Adios")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Execute Order Kurt.jpg"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -269,8 +289,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('bmw', 'Come Howl With Me')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}H O W L with me discord friendly.jpeg"
+
     embed = hikari.Embed(title="Come H O W L With Me!!")
-    embed.set_image(hikari.File(r"C:\Users\scott\Desktop\HEHEHE\H O W L with me discord friendly.jpeg"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -281,8 +303,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('laugh', 'For When LOL Aint Enough')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Charlie Murphyyyy.mp4"
+    
     embed = hikari.Embed(title="Charlie And The Gang")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Charlie Murphyyyy.mp4"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -293,8 +317,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('dale', 'Use For Smoke')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}Planet_Fitness_Selfie_X6.jpeg"
+    
     embed = hikari.Embed(title="Dale Brings All The Smoke")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\Planet_Fitness_Selfie_X6.jpeg"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
@@ -305,8 +331,10 @@ async def embed_command(ctx: lightbulb.Context) -> None:
 @lightbulb.command('blessings', 'Many Blessings')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def embed_command(ctx: lightbulb.Context) -> None:
+    image_url = f"{MEDIA_URL}AAALLLLAAAHHHHHH mp4.mp4"
+    
     embed = hikari.Embed(title="Allah Brings Great Glory")
-    embed.set_image(hikari.File(r"C:\\Users\\scott\\Desktop\\HEHEHE\\AAALLLLAAAHHHHHH mp4.mp4"))
+    embed.set_image(image_url)
     embed.set_thumbnail('http://naturalbridgezoo.com/wp-content/uploads/2017/03/Cassawary3.jpg')
     embed.set_footer('Please Return Carrier Cassowary aka CaCa')
     view = miru.View()
