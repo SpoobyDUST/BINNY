@@ -21,10 +21,10 @@ from dotenv import load_dotenv
 MEDIA_URL = "http://127.0.0.1:8000/media/" 
 
 load_dotenv()
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv("DISCORD_TOKEN")
 hikari.Activity(name='To PsyOPs', type=hikari.ActivityType.LISTENING)
 bot = lightbulb.BotApp(
-    DISCORD_TOKEN,
+    TOKEN,
     intents=hikari.Intents.ALL,
     
     default_enabled_guilds=(988579939655778324, 764963419920531457, 890010030408093706,1009170512779431998, 686007857644175380, 1002009682338136076, 1286207146530443285)
