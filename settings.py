@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # Allowed hosts for production (set this to your Heroku app URL)
-ALLOWED_HOSTS = ['your-heroku-app-name.herokuapp.com']
+ALLOWED_HOSTS = ['binny']
 
 # Application definition
 INSTALLED_APPS = [
