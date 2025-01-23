@@ -21,7 +21,7 @@ import django
 from dotenv import load_dotenv 
 
 # Set up Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DayWalkR.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BINNY.settings')
 django.setup()
 
 load_dotenv()
@@ -37,7 +37,7 @@ miru.install(bot)
  
 @bot.listen(hikari.StartedEvent)
 async def bot_started(event):
-    print('DayWalkR Just Walked In')
+    print('BINNY Just Walked In')
 
 
 @bot.listen()
