@@ -35,7 +35,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'DayWalkR.urls'
+ROOT_URLCONF = 'BINNY.urls'
 
 TEMPLATES = [
     {
@@ -53,7 +53,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'DayWalkR.wsgi.application'
+WSGI_APPLICATION = 'BINNY.wsgi.application'
 
 # Database configuration (use DATABASE_URL from Heroku environment variables)
 DATABASES = {

@@ -4,7 +4,7 @@ import sys
 
 if __name__ == "__main__":
     # Set the default settings module for the 'django' program
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DayWalkR.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "BINNY.settings")
 
     try:
         # Import Django's management commands
