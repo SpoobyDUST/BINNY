@@ -16,11 +16,16 @@ from multiprocessing import Event
 from tkinter import EventType
 import io
 from pathlib import Path
+import django
 
 from dotenv import load_dotenv 
 
+# Set up Django environment
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DayWalkR.settings')
+django.setup()
+
 load_dotenv()
-TOKEN = os.getenv("TOKEN")
+TOKEN = os.getenv("DISCORD_TOKEN")
 hikari.Activity(name='To PsyOPs', type=hikari.ActivityType.LISTENING)
 bot = lightbulb.BotApp(
     TOKEN,
