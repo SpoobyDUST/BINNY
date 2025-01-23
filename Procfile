@@ -1,2 +1,2 @@
 web: gunicorn DayWalkr.wsgi --log-file -
-bot: python bot.py
+bot: python hakari.py
